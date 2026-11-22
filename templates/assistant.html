@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% block title %}智能助手 · 天猫数据 AI 分析平台{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold text-white">智能助手</h1>
+    <p class="text-sm text-slate-400">数据查询自动生成 SQL；功能与业务概念问题直接作答（结果已去重，品类问题会排除配件）</p>
+  </div>
+  <button id="clear-history" class="inline-flex items-center gap-1 self-start rounded-lg border border-line px-3 py-2 text-sm text-slate-400 transition hover:border-rose-400/50 hover:text-rose-300">
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3M4 7h16"/></svg>
+    清空对话
+  </button>
+</div>
+
+<div class="grid grid-cols-1 gap-4 lg:grid-cols-[280px_1fr]">
+  <aside class="rounded-2xl border border-white/5 bg-card p-4 shadow-lg shadow-black/20">
+    <h2 class="mb-3 text-sm font-semibold text-slate-300">推荐问题</h2>
+    <div class="flex flex-col gap-2" id="suggestions">
+      <button class="suggestion rounded-lg border border-line/70 px-3 py-2 text-left text-sm text-slate-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white">推荐手机</button>
+      <button class="suggestion rounded-lg border border-line/70 px-3 py-2 text-left text-sm text-slate-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white">利润怎么算？</button>
+      <button class="suggestion rounded-lg border border-line/70 px-3 py-2 text-left text-sm text-slate-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white">什么是预估凑单价？</button>
+      <button class="suggestion rounded-lg border border-line/70 px-3 py-2 text-left text-sm text-slate-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white">热销商品 TOP10 是哪些？</button>
+      <button class="suggestion rounded-lg border border-line/70 px-3 py-2 text-left text-sm text-slate-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white">销量最高的品牌是哪个？</button>
+      <button class="suggestion rounded-lg border border-line/70 px-3 py-2 text-left text-sm text-slate-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white">佣金比例最高的类目是哪个？</button>
+      <button class="suggestion rounded-lg border border-line/70 px-3 py-2 text-left text-sm text-slate-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white">帮我推荐一些牛奶，价格不超过60一件</button>
+      <button class="suggestion rounded-lg border border-line/70 px-3 py-2 text-left text-sm text-slate-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white">有什么便宜的纸巾推荐</button>
+      <button class="suggestion rounded-lg border border-line/70 px-3 py-2 text-left text-sm text-slate-300 transition hover:border-indigo-400/60 hover:bg-indigo-500/10 hover:text-white">哪个发货地的商品数量最多？</button>
+    </div>
+    <div class="mt-4 rounded-lg bg-base/60 p-3 text-xs leading-relaxed text-slate-500">
+      提示：可描述价格区间、类目、品牌、佣金或补贴条件，例如“推荐3000元以内的手机”。
+    </div>
+  </aside>
+
+  <section class="flex min-h-[68vh] flex-col overflow-hidden rounded-2xl border border-white/5 bg-card shadow-lg shadow-black/20">
+    <div id="messages" class="flex-1 space-y-4 overflow-y-auto p-5" style="max-height: 60vh;">
+      <div class="flex gap-3">
+        <span class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-400 text-sm font-bold text-white">AI</span>
+        <div class="max-w-[85%] rounded-xl rounded-tl-sm bg-base/70 px-4 py-3 text-sm leading-relaxed text-slate-200">
+          你好，我是天猫数据分析助手。数据类问题（如"推荐手机""热销商品TOP10"）我会查询数据库并给出商品链接；功能或业务概念问题（如"利润怎么算"）我会直接为你解答。
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-line/60 p-4">
+      <div class="flex items-end gap-3">
+        <textarea id="question" rows="2" placeholder="请输入问题，例如：推荐手机（Enter 发送，Shift+Enter 换行）"
+                  class="flex-1 resize-none rounded-xl border border-line bg-base/70 px-4 py-3 text-sm text-slate-200 placeholder-slate-500 outline-none transition focus:border-indigo-400"></textarea>
+        <button id="send" class="h-11 shrink-0 rounded-xl bg-gradient-to-r from-indigo-500 to-cyan-500 px-6 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50">发送</button>
+      </div>
+      <p id="status" class="mt-2 hidden text-xs text-indigo-300">正在生成 SQL 并查询数据 ...</p>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .md-body p { margin: 0.25rem 0 0.5rem; }
+  .md-body hr { border-color: rgba(55, 65, 81, 0.6); margin: 0.75rem 0; }
+  .md-body a { color: #22D3EE; text-decoration: none; }
+  .md-body strong { color: #F9FAFB; }
+  .md-body p:last-child { margin-bottom: 0; }
+  /* 两行标题，超出省略 */
+  .product-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  const messagesEl = document.getElementById('messages');
+  const inputEl = document.getElementById('question');
+  const sendBtn = document.getElementById('send');
+  const statusEl = document.getElementById('status');
+
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function renderText(text) {
+    let html = escapeHtml(text);
+    // 后端输出的 [点击查看商品](url) 转为短链接按钮
+    html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, label, url) =>
+      `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-cyan-300 underline decoration-cyan-500/40 hover:text-cyan-200">${label}</a>`);
+    // 其余裸链接统一显示“点击查看商品”，绝不暴露长 URL
+    html = html.replace(/(^|[^"'>])(https?:\/\/[^\s<，。；、）)]+)/g, (_, prefix, url) =>
+      `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-cyan-300 underline decoration-cyan-500/40 hover:text-cyan-200">点击查看商品</a>`);
+    return html.replace(/\n/g, '<br>');
+  }
+
+  // AI 只返回纯文本引导语，这里仅做 Markdown 渲染
+  function renderMarkdown(text) {
+    return marked.parse(String(text || ''), { breaks: true, gfm: true });
+  }
+
+  // 单张商品卡片：左图右文，整卡可点击
+  function renderProductCard(product) {
+    const link = /^https?:\/\//.test(product.link || '') ? product.link : '';
+    const img = /^https?:\/\//.test(product.img || '') ? product.img : '';
+    const price = Number(product.price || 0).toFixed(2);
+    const sales = product.sales ? `销量 ${escapeHtml(String(product.sales))}` : '';
+    const brand = product.brand
+      ? `<span class="mb-1 inline-block max-w-full truncate rounded bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-400">${escapeHtml(product.brand)}</span>`
+      : '';
+    const inner = `
+      ${img
+        ? `<img src="${escapeHtml(img)}" alt="" class="h-24 w-24 shrink-0 rounded-lg bg-[#111827] object-cover">`
+        : `<div class="h-24 w-24 shrink-0 rounded-lg bg-[#111827]"></div>`}
+      <div class="flex h-24 min-w-0 flex-1 flex-col justify-between">
+        <div class="min-w-0">
+          ${brand}
+          <p class="product-title text-sm leading-snug text-slate-200">${escapeHtml(product.title || '')}</p>
+        </div>
+        <div class="flex items-end justify-between gap-2">
+          <span class="text-base font-bold text-red-500">¥${price}</span>
+          <span class="shrink-0 text-xs text-slate-500">${sales}</span>
+        </div>
+      </div>`;
+    const baseCls = 'flex items-center gap-3 rounded-xl border border-white/5 bg-[#1F2937] p-3 transition';
+    if (!link) return `<div class="${baseCls}">${inner}</div>`;
+    return `<a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer" class="${baseCls} hover:border-indigo-400/40 hover:bg-[#263244]">${inner}</a>`;
+  }
+
+  function appendUser(text) {
+    const wrap = document.createElement('div');
+    wrap.className = 'flex justify-end gap-3';
+    wrap.innerHTML = `
+      <div class="max-w-[85%] rounded-xl rounded-tr-sm bg-indigo-500/20 px-4 py-3 text-sm leading-relaxed text-indigo-100">${renderText(text)}</div>
+      <span class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/30 text-xs font-semibold text-indigo-200">我</span>`;
+    messagesEl.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function appendAssistant(payload) {
+    const wrap = document.createElement('div');
+    wrap.className = 'flex gap-3';
+    const products = Array.isArray(payload.products) ? payload.products : [];
+    const reply = payload.reply_text || '';
+    let body = '';
+    if (reply) {
+      body += `<div class="md-body rounded-xl rounded-tl-sm bg-base/70 px-4 py-3 text-sm leading-relaxed text-slate-200">${renderMarkdown(reply)}</div>`;
+    }
+    if (products.length) {
+      body += `<div class="grid grid-cols-1 gap-4 md:grid-cols-2">${products.map(renderProductCard).join('')}</div>`;
+    }
+    if (!body) {
+      body = `<div class="rounded-xl rounded-tl-sm bg-base/70 px-4 py-3 text-sm leading-relaxed text-slate-200">${renderText('没有查询到符合条件的数据。')}</div>`;
+    }
+
+    let html = `
+      <span class="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-cyan-400 text-sm font-bold text-white">AI</span>
+      <div class="min-w-0 max-w-[95%] flex-1 space-y-2">${body}`;
+    if (payload.sql) {
+      html += `
+        <details class="rounded-lg border border-line/60 bg-base/40 px-3 py-2 text-xs text-slate-400">
+          <summary class="cursor-pointer select-none hover:text-slate-200">查看生成的 SQL</summary>
+          <pre class="mt-2 overflow-x-auto whitespace-pre-wrap break-all text-[11px] leading-relaxed text-cyan-300/90">${escapeHtml(payload.sql)}</pre>
+        </details>`;
+    }
+    if (payload.row_count && !products.length) {
+      html += `<p class="text-xs text-slate-500">命中 ${payload.row_count} 条数据</p>`;
+    }
+    html += `</div>`;
+    wrap.innerHTML = html;
+    messagesEl.appendChild(wrap);
+    scrollBottom();
+  }
+
+  function scrollBottom() {
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function setLoading(loading) {
+    sendBtn.disabled = loading;
+    inputEl.disabled = loading;
+    statusEl.classList.toggle('hidden', !loading);
+  }
+
+  async function ask(question) {
+    if (!question.trim()) return;
+    appendUser(question);
+    inputEl.value = '';
+    setLoading(true);
+    try {
+      const resp = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question })
+      });
+      const data = await resp.json();
+      if (!resp.ok || data.ok === false) {
+        appendAssistant({ reply_text: data.error || '查询失败，请稍后再试。', sql: data.sql || '' });
+      } else {
+        appendAssistant(data);
+      }
+    } catch (err) {
+      appendAssistant({ reply_text: '网络异常，无法连接分析服务：' + err.message });
+    } finally {
+      setLoading(false);
+      inputEl.focus();
+    }
+  }
+
+  sendBtn.addEventListener('click', () => ask(inputEl.value));
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      ask(inputEl.value);
+    }
+  });
+  document.querySelectorAll('.suggestion').forEach(btn => {
+    btn.addEventListener('click', () => ask(btn.textContent.trim()));
+  });
+
+  // 切换页面后重新拉取后端会话记录并渲染
+  const welcomeHtml = messagesEl.innerHTML;
+
+  async function loadHistory() {
+    try {
+      const resp = await fetch('/api/history');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      (data.history || []).forEach(item => {
+        if (item.role === 'user') {
+          appendUser(item.content);
+        } else {
+          appendAssistant({
+            reply_text: item.content,
+            sql: item.sql || '',
+            products: item.products || []
+          });
+        }
+      });
+    } catch (err) {
+      // 历史记录读取失败不影响当前对话
+    }
+  }
+
+  document.getElementById('clear-history').addEventListener('click', async () => {
+    if (!window.confirm('确定清空当前对话记录吗？')) return;
+    try {
+      await fetch('/api/history', { method: 'DELETE' });
+    } catch (err) {
+      // 忽略网络异常，仍然清空本地视图
+    }
+    messagesEl.innerHTML = welcomeHtml;
+  });
+
+  loadHistory();
+</script>
+{% endblock %}

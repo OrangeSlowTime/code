@@ -1,0 +1,57 @@
+# === 密钥与环境变量（防止 API Key 泄露）===
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+credentials.json
+secrets.json
+
+# === Python 依赖与缓存 ===
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# === 数据文件（体积过大，GitHub 单文件上限 100MB）===
+*.csv
+TmallData/
+tmall.db
+*.db
+*.sqlite3
+chroma.sqlite3
+chroma.sqlite3-journal
+
+# Chroma 向量库集合目录（UUID 命名）
+/*-*-*-*-*/
+
+# === 日志与截图 ===
+*.log
+logs/
+log/
+.screenshots/
+
+# === Node 构建与依赖（如后续引入前端）===
+node_modules/
+.next/
+dist/
+build/
+out/
+.npm/
+.pnpm-store/
+
+# === 编辑器与系统 ===
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini

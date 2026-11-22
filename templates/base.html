@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}天猫数据 AI 分析平台{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { base: '#111827', card: '#1F2937', line: '#374151' },
+          fontFamily: { sans: ['"Microsoft YaHei"', 'Inter', 'system-ui', 'sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #111827; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #111827; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4B5563; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="flex min-h-screen flex-col bg-base font-sans text-slate-200">
+
+  <header class="sticky top-0 z-50 border-b border-line/60 bg-[#111827]/90 backdrop-blur">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+      <a href="/home" class="flex items-center gap-3">
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-cyan-400 text-lg font-bold text-white">猫</span>
+        <span class="text-lg font-semibold tracking-wide text-white">天猫数据 <span class="text-indigo-400">AI 分析平台</span></span>
+      </a>
+      <nav class="flex items-center gap-1 sm:gap-2">
+        <a href="/home"
+           class="rounded-lg px-3 py-2 text-sm transition {{ 'bg-indigo-500/15 text-indigo-300' if request.path == '/home' else 'text-slate-400 hover:bg-white/5 hover:text-slate-200' }}">
+          首页
+        </a>
+        {% if session.get('role') == 'admin' %}
+        <a href="/dashboard"
+           class="rounded-lg px-3 py-2 text-sm transition {{ 'bg-indigo-500/15 text-indigo-300' if request.path == '/dashboard' else 'text-slate-400 hover:bg-white/5 hover:text-slate-200' }}">
+          数据看板
+        </a>
+        {% endif %}
+        <a href="/assistant"
+           class="rounded-lg px-3 py-2 text-sm transition {{ 'bg-indigo-500/15 text-indigo-300' if request.path == '/assistant' else 'text-slate-400 hover:bg-white/5 hover:text-slate-200' }}">
+          智能助手
+        </a>
+        <a href="/profile"
+           class="rounded-lg px-3 py-2 text-sm transition {{ 'bg-indigo-500/15 text-indigo-300' if request.path == '/profile' else 'text-slate-400 hover:bg-white/5 hover:text-slate-200' }}">
+          个人中心
+        </a>
+        {% if session.get('role') == 'admin' %}
+        <a href="/admin"
+           class="rounded-lg px-3 py-2 text-sm transition {{ 'bg-indigo-500/15 text-indigo-300' if request.path == '/admin' else 'text-slate-400 hover:bg-white/5 hover:text-slate-200' }}">
+          系统后台
+        </a>
+        {% endif %}
+        <a href="/logout"
+           class="ml-1 rounded-lg border border-line px-3 py-2 text-sm text-slate-400 transition hover:border-rose-400/50 hover:text-rose-300">
+          退出登录
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-t border-line/60 py-5 text-center text-xs text-slate-500">
+    天猫电商大数据商业分析平台 · 数据来源 TmallData · 由 DeepSeek + Vanna 驱动
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

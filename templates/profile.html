@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}个人中心 · 天猫数据 AI 分析平台{% endblock %}
+
+{% block content %}
+<div class="mx-auto flex max-w-3xl flex-col gap-4">
+  <div>
+    <h1 class="text-2xl font-semibold text-white">个人中心</h1>
+    <p class="text-sm text-slate-400">维护账号资料与登录密码</p>
+  </div>
+
+  {% if message %}
+  <div class="rounded-lg bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">{{ message }}</div>
+  {% endif %}
+  {% if error %}
+  <div class="rounded-lg bg-rose-500/10 px-4 py-2 text-sm text-rose-300">{{ error }}</div>
+  {% endif %}
+
+  <form method="POST" action="/profile"
+        class="rounded-2xl border border-white/5 bg-card p-6 shadow-lg shadow-black/20">
+    <div class="flex flex-col gap-6 sm:flex-row">
+      <!-- 左侧头像 -->
+      <div class="flex w-full flex-col items-center gap-2 sm:w-40">
+        <img id="avatar-preview" src="{{ profile.avatar }}" alt="头像"
+             class="h-28 w-28 rounded-full border-2 border-indigo-400/40 bg-base object-cover">
+        <label for="avatar" class="cursor-pointer rounded-lg border border-line px-3 py-1.5 text-xs text-slate-400 transition hover:border-indigo-400/60 hover:text-slate-200">
+          修改头像链接
+        </label>
+        <input id="avatar" name="avatar" type="url" value="{{ profile.avatar }}"
+               placeholder="https://..."
+               class="w-full rounded-lg border border-line bg-base/70 px-2 py-1.5 text-center text-[11px] text-slate-300 outline-none focus:border-indigo-400">
+        <span class="text-center text-[11px] text-slate-500">支持图片 URL，留空则使用默认头像</span>
+      </div>
+
+      <!-- 右侧信息 -->
+      <div class="flex-1 space-y-4">
+        <div>
+          <label class="mb-1 block text-sm text-slate-400">账号</label>
+          <input type="text" value="{{ profile.username }}" disabled
+                 class="w-full cursor-not-allowed rounded-lg border border-line bg-base/40 px-3 py-2 text-sm text-slate-500">
+        </div>
+        <div>
+          <label class="mb-1 block text-sm text-slate-400" for="nickname">昵称</label>
+          <input id="nickname" name="nickname" type="text" maxlength="30" value="{{ profile.nickname or '' }}"
+                 class="w-full rounded-lg border border-line bg-base/70 px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-400">
+        </div>
+        <div>
+          <label class="mb-1 block text-sm text-slate-400" for="email">邮箱</label>
+          <input id="email" name="email" type="email" value="{{ profile.email or '' }}"
+                 class="w-full rounded-lg border border-line bg-base/70 px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-400">
+        </div>
+        <div>
+          <label class="mb-1 block text-sm text-slate-400" for="phone">手机号</label>
+          <input id="phone" name="phone" type="tel" value="{{ profile.phone or '' }}"
+                 class="w-full rounded-lg border border-line bg-base/70 px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-400">
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-6 border-t border-line/60 pt-5">
+      <h2 class="mb-3 text-sm font-semibold text-slate-300">修改密码（不修改请留空）</h2>
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <input name="current_password" type="password" placeholder="当前密码" autocomplete="current-password"
+               class="rounded-lg border border-line bg-base/70 px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-400">
+        <input name="new_password" type="password" placeholder="新密码（至少 6 位）" autocomplete="new-password"
+               class="rounded-lg border border-line bg-base/70 px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-400">
+        <input name="confirm_password" type="password" placeholder="确认新密码" autocomplete="new-password"
+               class="rounded-lg border border-line bg-base/70 px-3 py-2 text-sm text-slate-200 outline-none focus:border-indigo-400">
+      </div>
+    </div>
+
+    <div class="mt-6 flex items-center gap-3">
+      <button type="submit"
+              class="rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90">
+        保存修改
+      </button>
+      <a href="/home"
+         class="rounded-lg border border-line px-5 py-2.5 text-sm text-slate-400 transition hover:border-slate-400/50 hover:text-slate-200">
+        返回首页
+      </a>
+      <span class="ml-auto text-xs text-slate-500">注册于 {{ profile.created_at or '—' }}</span>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // 头像链接实时预览（仅前端预览，保存后生效）
+  const avatarInput = document.getElementById('avatar');
+  const avatarPreview = document.getElementById('avatar-preview');
+  avatarInput.addEventListener('input', () => {
+    const url = avatarInput.value.trim();
+    avatarPreview.src = /^https?:\/\//.test(url) ? url : '{{ default_avatar }}';
+  });
+  avatarPreview.addEventListener('click', () => avatarInput.focus());
+</script>
+{% endblock %}

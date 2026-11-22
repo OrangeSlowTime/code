@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}商品首页 · 天猫数据 AI 分析平台{% endblock %}
+
+{% block head %}
+<style>
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if request.args.get('denied') %}
+<div class="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+  无权访问数据看板：该页面及看板数据仅管理员可见。
+</div>
+{% endif %}
+
+<div class="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold text-white">发现好物</h1>
+    <p class="text-sm text-slate-400">
+      {% if total %}
+        共找到 <span class="text-indigo-300 font-semibold">{{ "{:,}".format(total) }}</span> 件商品，当前展示 {{ products|length }} 件
+      {% else %}
+        从 11,889 件天猫商品中为你推荐
+      {% endif %}
+    </p>
+  </div>
+  <a href="{{ url_for('home', keyword=filters.keyword, brand=filters.brand, category=filters.category, sort=filters.sort, price_range=filters.price_range) }}"
+     class="mt-2 inline-flex items-center gap-1 self-start rounded-lg border border-line px-3 py-2 text-sm text-slate-400 transition hover:border-indigo-400/60 hover:text-indigo-300 sm:mt-0">
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    换一批
+  </a>
+</div>
+
+<form method="GET" action="{{ url_for('home') }}" class="mb-6 rounded-2xl border border-white/5 bg-card p-4 shadow-lg shadow-black/20">
+  <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+    <div class="relative flex-1">
+      <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"/></svg>
+      <input type="text" name="keyword" value="{{ filters.keyword }}" placeholder="搜索商品标题、品牌或类目，例如：充电宝"
+             class="w-full rounded-lg border border-line bg-base/70 py-2.5 pl-10 pr-3 text-sm text-slate-200 placeholder-slate-500 outline-none transition focus:border-indigo-400">
+    </div>
+    <select name="brand"
+            class="w-full rounded-lg border border-line bg-base/70 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-indigo-400 lg:w-44">
+      <option value="">全部品牌</option>
+      {% for b in brands %}
+      <option value="{{ b }}" {{ 'selected' if filters.brand == b else '' }}>{{ b }}</option>
+      {% endfor %}
+    </select>
+    <select name="category"
+            class="w-full rounded-lg border border-line bg-base/70 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-indigo-400 lg:w-52">
+      <option value="">全部品类</option>
+      {% for c in categories %}
+      <option value="{{ c }}" {{ 'selected' if filters.category == c else '' }}>{{ c }}</option>
+      {% endfor %}
+    </select>
+    <select name="price_range"
+            class="w-full rounded-lg border border-line bg-base/70 px-3 py-2.5 text-sm text-slate-200 outline-none transition focus:border-indigo-400 lg:w-40">
+      <option value="">全部价格</option>
+      {% for value, label in price_options %}
+      <option value="{{ value }}" {{ 'selected' if filters.price_range == value else '' }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="mt-3 flex flex-wrap items-center gap-2">
+    <button type="submit" name="sort" value="{{ filters.sort }}"
+            class="rounded-lg bg-gradient-to-r from-indigo-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90">
+      搜索
+    </button>
+    <button type="submit" name="sort" value="sales"
+            class="rounded-lg border px-4 py-2 text-sm transition {{ 'border-indigo-400/70 bg-indigo-500/15 text-indigo-300' if filters.sort == 'sales' else 'border-line text-slate-400 hover:border-indigo-400/60 hover:text-indigo-300' }}">
+      按销量排序
+    </button>
+    <button type="submit" name="sort" value="price_asc"
+            class="rounded-lg border px-4 py-2 text-sm transition {{ 'border-indigo-400/70 bg-indigo-500/15 text-indigo-300' if filters.sort == 'price_asc' else 'border-line text-slate-400 hover:border-indigo-400/60 hover:text-indigo-300' }}">
+      按价格排序（从低到高）
+    </button>
+    {% if filters.keyword or filters.brand or filters.category or filters.price_range or filters.sort %}
+    <a href="{{ url_for('home') }}" class="rounded-lg border border-line px-4 py-2 text-sm text-slate-400 transition hover:border-rose-400/50 hover:text-rose-300">
+      重置筛选
+    </a>
+    {% endif %}
+  </div>
+</form>
+
+{% if error %}
+<div class="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+  {{ error }}
+</div>
+{% endif %}
+
+{% if products %}
+<div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+  {% for p in products %}
+  <a {% if p.商品链接 %}href="{{ p.商品链接 }}" target="_blank" rel="noopener noreferrer"{% else %}href="javascript:void(0)"{% endif %}
+     class="group flex flex-col overflow-hidden rounded-2xl border border-white/5 bg-card shadow-lg shadow-black/20 transition duration-200 hover:-translate-y-1 hover:border-indigo-400/40">
+
+    <div class="relative h-48 w-full overflow-hidden bg-[#0B1220]">
+      {% if p.图片 %}
+      <img src="{{ p.图片 }}" alt="{{ p.商品标题 }}" loading="lazy"
+           class="h-48 w-full object-cover transition duration-300 group-hover:scale-105"
+           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div class="absolute inset-0 hidden items-center justify-center text-xs text-slate-600">暂无图片</div>
+      {% else %}
+      <div class="flex h-full w-full items-center justify-center text-xs text-slate-600">暂无图片</div>
+      {% endif %}
+
+      {% if p.品牌名称 and p.品牌名称 not in ('无品牌', '未知品牌') %}
+      <span class="absolute left-2 top-2 max-w-[80%] truncate rounded-md border border-white/10 bg-black/60 px-2 py-0.5 text-[11px] text-indigo-200 backdrop-blur">
+        {{ p.品牌名称 }}
+      </span>
+      {% endif %}
+    </div>
+
+    <div class="flex flex-1 flex-col gap-2 p-3">
+      <h3 class="line-clamp-2 min-h-[2.5rem] text-sm leading-5 text-slate-200 group-hover:text-white">{{ p.商品标题 }}</h3>
+
+      <div class="mt-auto flex items-end justify-between">
+        {% if p.最终促销价 is not none and p.最终促销价 > 0 %}
+        <p class="text-lg font-bold text-rose-400"><span class="text-sm">¥</span>{{ "%.2f"|format(p.最终促销价) }}</p>
+        {% else %}
+        <p class="text-sm text-slate-500">价格待定</p>
+        {% endif %}
+        <p class="text-[11px] text-slate-500">
+          {% if p.年销量 %}
+            年销量: {% if p.年销量 >= 10000 %}{{ "%.1f"|format(p.年销量 / 10000) }}万{% else %}{{ "{:,.0f}".format(p.年销量) }}{% endif %}
+          {% else %}
+            年销量: --
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% elif not error %}
+<div class="rounded-2xl border border-white/5 bg-card px-6 py-16 text-center text-sm text-slate-400">
+  暂无商品数据，请先运行 <code class="text-indigo-300">python load_data.py</code> 完成入库。
+</div>
+{% endif %}
+
+<!-- 悬浮 AI 助手入口 -->
+<a href="/assistant" title="打开 AI 助手"
+   class="fixed bottom-6 right-6 z-50 flex h-16 w-16 flex-col items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-cyan-400 text-white shadow-2xl shadow-indigo-900/50 ring-4 ring-indigo-500/20 transition hover:scale-105">
+  <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-4 4v-4z"/></svg>
+  <span class="mt-0.5 text-[10px] font-semibold leading-none">AI 助手</span>
+</a>
+{% endblock %}
